@@ -8,18 +8,12 @@ class Config:
     """Configuration générale de l'application"""
     
     # Configuration Flask
-    FLASK_HOST = "127.0.0.1"
-    FLASK_PORT = 5001
-    FLASK_DEBUG = True
+    FLASK_HOST = os.getenv("FLASK_HOST", "0.0.0.0")   
+    FLASK_PORT = int(os.getenv("FLASK_PORT", 10000)) 
+    FLASK_DEBUG = os.getenv("FLASK_DEBUG", "false").lower() == "true" 
     
     # Configuration CORS
-    CORS_ORIGINS = [
-        "http://localhost:3000",     
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",     
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",     
-    ]
+    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")  
     
     # Configuration API
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
@@ -27,10 +21,10 @@ class Config:
     # Validation des variables d'environnement
     @classmethod
     def validate_config(cls):
-        """Valider que toutes les variables nécessaires sont présentes"""
         if not cls.GROQ_API_KEY:
-            raise ValueError("❌ GROQ_API_KEY manquante dans le fichier .env")
+            raise ValueError("❌ GROQ_API_KEY manquante dans le fichier .env ou dans les variables Render")
         return True
+
 
 class GroqConfig:
     """Configuration spécifique pour Groq"""

@@ -13,7 +13,7 @@ class Config:
     FLASK_DEBUG = os.getenv("FLASK_DEBUG", "false").lower() == "true" 
     
     # Configuration CORS
-    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")  
+    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "https://noujiengennering.netlify.app").split(",")  
     
     # Configuration API
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")

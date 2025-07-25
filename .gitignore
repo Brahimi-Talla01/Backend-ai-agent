@@ -1,0 +1,36 @@
+# Ignore les environnements virtuels
+venv/
+venv_clean/
+
+# Fichiers Python à ignorer
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Fichiers de configuration sensibles
+.env
+*.env
+
+# Fichiers de logs ou temporaires
+*.log
+*.sqlite3
+*.db
+*.tmp
+
+# Cache ou historique de l’IDE
+*.swp
+*.bak
+.DS_Store
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Dépendances compilées
+*.so
+*.egg-info/
+dist/
+build/
+
+# Déploiement Python
+instance/

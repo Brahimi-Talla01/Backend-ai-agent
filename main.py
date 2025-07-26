@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
@@ -14,15 +14,43 @@ if not load_config():
 
 app = Flask(__name__)
 
-# Configuration CORS avec les paramètres du fichier config
-CORS(app, resources={
-      r"/api/*": {
-            "origins": Config.CORS_ORIGINS,
-            "methods": ["GET", "POST", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True
-      }
-})
+print("CORS origins autorisés :", Config.CORS_ORIGINS)
+
+# Configuration CORS simplifiée et plus permissive
+CORS(app, 
+     origins=Config.CORS_ORIGINS,
+     methods=["GET", "POST", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"],
+     supports_credentials=True,
+     send_wildcard=False
+)
+
+# Handler explicite pour les requêtes OPTIONS (preflight)
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        print(f"🔄 Requête OPTIONS reçue pour: {request.path}")
+        print(f"Origin: {request.headers.get('Origin')}")
+        
+        response = make_response()
+        
+        # Vérifier si l'origin est autorisé
+        origin = request.headers.get('Origin')
+        if origin in Config.CORS_ORIGINS:
+            response.headers.add("Access-Control-Allow-Origin", origin)
+        elif Config.CORS_ORIGINS == ["*"]:  
+            response.headers.add("Access-Control-Allow-Origin", "*")
+        else:
+            # Fallback pour votre domaine spécifique
+            response.headers.add("Access-Control-Allow-Origin", "https://noujiengennering.netlify.app")
+            
+        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization")
+        response.headers.add('Access-Control-Allow-Methods', "GET,POST,OPTIONS")
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Max-Age', '86400')  # Cache preflight 24h
+        
+        print(f"✅ Headers CORS ajoutés pour OPTIONS")
+        return response
 
 # Rate limiting simple (stockage en mémoire)
 request_counts = defaultdict(lambda: {"count": 0, "reset_time": time.time() + 60})
@@ -79,7 +107,7 @@ def chat_with_welcome_agent():
                         'rate_limit_exceeded': True
                   }), 429
             
-            print(f"🔄 Requête reçue de {client_ip}")
+            print(f"🔄 Requête POST reçue de {client_ip}")
             
             # Récupérer le message depuis le frontend
             data = request.get_json()
@@ -176,10 +204,22 @@ def get_stats():
                   'error': 'Erreur lors de la récupération des statistiques'
             }), 500
 
+# Route de test pour débugger CORS
+@app.route('/api/cors-test', methods=['GET', 'POST', 'OPTIONS'])
+def cors_test():
+      """Route de test pour vérifier les en-têtes CORS"""
+      return jsonify({
+            'message': 'CORS test successful',
+            'method': request.method,
+            'origin': request.headers.get('Origin'),
+            'headers': dict(request.headers)
+      })
+
 if __name__ == '__main__':
       print("Démarrage du serveur WelcomeAgent...")
       print(f"API disponible sur: http://{Config.FLASK_HOST}:{Config.FLASK_PORT}")
       print(f"Health check: http://{Config.FLASK_HOST}:{Config.FLASK_PORT}/api/health")
+      print(f"CORS test: http://{Config.FLASK_HOST}:{Config.FLASK_PORT}/api/cors-test")
       
       app.run(
             host=Config.FLASK_HOST,
